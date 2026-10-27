@@ -24,6 +24,7 @@ export default function FitGapReportPage() {
   const [loading, setLoading] = useState(true);
   const [exporting, setExporting] = useState<"pdf" | "json" | null>(null);
   const [regenerating, setRegenerating] = useState(false);
+  const [regenerateError, setRegenerateError] = useState<string | null>(null);
 
   const fetchReport = useCallback(async () => {
     if (!portfolio) return;
@@ -62,16 +63,27 @@ export default function FitGapReportPage() {
   usePolling(fetchReport, 5000, generating && !!portfolio);
 
   const handleRegenerate = async () => {
-    if (!portfolio) return;
-    setRegenerating(true);
-    try {
-      await portfoliosApi.regenerateFitGap(portfolio.id, Number(vacancyId));
-      setReport(null);
-      setGenerating(true);
-    } finally {
-      setRegenerating(false);
-    }
-  };
+  if (!portfolio || regenerating || generating) return;
+
+  setRegenerating(true);
+  setRegenerateError(null);
+
+  try {
+    await portfoliosApi.regenerateFitGap(
+      portfolio.id,
+      Number(vacancyId)
+    );
+
+    setGenerating(true);
+  } catch (error) {
+    console.error("Failed to regenerate fit/gap report:", error);
+    setRegenerateError(
+      "Unable to regenerate the report. Your existing report is still available. Please try again."
+    );
+  } finally {
+    setRegenerating(false);
+  }
+};
 
   const handleExport = async (format: "pdf" | "json") => {
     if (!portfolio) return;
@@ -118,6 +130,21 @@ export default function FitGapReportPage() {
           </div>
         </div>
 
+        {regenerateError && (
+  <div
+    role="alert"
+    className="mb-4 rounded-md border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700"
+  >
+    {regenerateError}
+    <button
+      type="button"
+      className="ml-2 underline"
+      onClick={() => setRegenerateError(null)}
+    >
+      Dismiss
+    </button>
+  </div>
+)}
         {portfolio && (
           <div className="flex gap-2">
             <Button variant="outline" size="sm" onClick={handleRegenerate} disabled={regenerating || generating}>
