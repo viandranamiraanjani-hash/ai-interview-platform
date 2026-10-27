@@ -62,28 +62,29 @@ export default function FitGapReportPage() {
 
   usePolling(fetchReport, 5000, generating && !!portfolio);
 
-  const handleRegenerate = async () => {
-  if (!portfolio || regenerating || generating) return;
+   const handleRegenerate = async () => {
+    if (!portfolio || regenerating || generating) return;
 
-  setRegenerating(true);
-  setRegenerateError(null);
+    setRegenerating(true);
+    setRegenerateError(null);
 
-  try {
-    await portfoliosApi.regenerateFitGap(
-      portfolio.id,
-      Number(vacancyId)
-    );
+    try {
+      await portfoliosApi.regenerateFitGap(
+        portfolio.id,
+        Number(vacancyId)
+      );
 
-    setGenerating(true);
-  } catch (error) {
-    console.error("Failed to regenerate fit/gap report:", error);
-    setRegenerateError(
-      "Unable to regenerate the report. Your existing report is still available. Please try again."
-    );
-  } finally {
-    setRegenerating(false);
-  }
-};
+      // Keep the existing report visible while regeneration runs.
+      setGenerating(true);
+    } catch (error) {
+      console.error("Failed to regenerate fit/gap report:", error);
+      setRegenerateError(
+        "Unable to regenerate the report. Your existing report is still available. Please try again."
+      );
+    } finally {
+      setRegenerating(false);
+    }
+  };
 
   const handleExport = async (format: "pdf" | "json") => {
     if (!portfolio) return;
